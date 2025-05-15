@@ -1,4 +1,4 @@
-package com.kantares.store.payments;
+package com.kantares.store.order;
 
 public enum PaymentStatus {
     PAID,

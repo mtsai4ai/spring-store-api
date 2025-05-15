@@ -1,5 +1,6 @@
 package com.kantares.store.auth;
 
+import com.kantares.store.common.SecurityRules;
 import com.kantares.store.user.Role;
 import com.kantares.store.user.UserService;
 import org.slf4j.Logger;
@@ -23,6 +24,8 @@ import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 
+import java.util.List;
+
 @ControllerAdvice
 @EnableWebSecurity
 public class SecurityConfig {
@@ -30,27 +33,24 @@ public class SecurityConfig {
 
     private final UserDetailsService userDetailsService;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final List<SecurityRules> featureSecurityRules;
 
-    public SecurityConfig(UserService userDetailsService, JwtAuthenticationFilter jwtAuthenticationFilter) {
+    public SecurityConfig(UserService userDetailsService, JwtAuthenticationFilter jwtAuthenticationFilter, List<SecurityRules> featureSecurityRules) {
         this.userDetailsService = userDetailsService;
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+        this.featureSecurityRules = featureSecurityRules;
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http
+    public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
+        httpSecurity
             .sessionManagement(c ->
                 c.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .csrf(AbstractHttpConfigurer::disable)
-            .authorizeHttpRequests(c -> c
-                .requestMatchers("/carts/**").permitAll()
-                .requestMatchers("/admin/**").hasRole(Role.ADMIN.name())
-                .requestMatchers(HttpMethod.POST, "/users").permitAll()
-                .requestMatchers(HttpMethod.POST, "/auth/login").permitAll()
-                .requestMatchers(HttpMethod.POST, "/auth/refresh").permitAll()
-                .requestMatchers(HttpMethod.POST, "/checkout/webhook").permitAll()
-                .anyRequest().authenticated()
-            )
+            .authorizeHttpRequests(c -> {
+                featureSecurityRules.forEach(rule -> rule.configure(c));
+                c.anyRequest().authenticated();
+            })
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
             .exceptionHandling(c -> {
                 c.authenticationEntryPoint(
@@ -60,7 +60,7 @@ public class SecurityConfig {
                     response.setStatus(HttpStatus.FORBIDDEN.value());
                 });
             });
-        return http.build();
+        return httpSecurity.build();
     }
 
     @Bean

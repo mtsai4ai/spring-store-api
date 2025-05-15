@@ -22,12 +22,13 @@ public class Jwt {
     private final SecretKey key;
 
     public boolean isValid() {
-        if (claims == null) {
-            return false;
-        }
-
         Date expiration = claims.getExpiration();
         return expiration.after(new Date());
+    }
+
+    public boolean isExpired() {
+        Date expiration = claims.getExpiration();
+        return expiration == null || expiration.before(new Date());
     }
 
     public String getSubject() {

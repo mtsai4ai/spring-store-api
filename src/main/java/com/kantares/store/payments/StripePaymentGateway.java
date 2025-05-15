@@ -2,6 +2,7 @@ package com.kantares.store.payments;
 
 import com.kantares.store.order.Order;
 import com.kantares.store.order.OrderItem;
+import com.kantares.store.order.PaymentStatus;
 import com.kantares.store.product.Product;
 import com.stripe.exception.SignatureVerificationException;
 import com.stripe.exception.StripeException;
