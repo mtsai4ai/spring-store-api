@@ -1,0 +1,22 @@
+spring:
+  application:
+    name: store-api
+  datasource:
+    username: root
+    password: super-password
+    url: jdbc:mysql://localhost:3306/store_api?createDatabaseIfNotExist=true
+  jpa:
+    show-sql: true
+  jwt:
+    secret: ${JWT_SECRET}
+    accessTokenExpiration: 7200 # 2 hours in seconds
+    refreshTokenExpiration: 604800 # 7 days in seconds
+server:
+  port: 8010
+stripe:
+  api:
+    key: ${STRIPE_API_KEY}
+  webhook:
+    secret: ${STRIPE_WEBHOOK_SECRET}
+website:
+  url: http://localhost:8010
