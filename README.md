@@ -46,4 +46,4 @@
  This project uses Spring Boot BOM for dependency management.
  Please make sure that you use Spring Boot dependencies with the same version as Spring Boot BOM.
  
- For more information on Spring Boot BOM, please visit [Spring Boot Release Notes](https://spring.io/projects/spring-boot).spring-store-api
+ For more information on Spring Boot BOM, please visit [Spring Boot Release Notes](https://spring.io/projects/spring-boot).
