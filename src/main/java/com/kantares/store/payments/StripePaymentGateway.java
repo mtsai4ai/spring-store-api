@@ -51,14 +51,18 @@ public class StripePaymentGateway implements PaymentGateway {
             String payload = request.getPayload();
             String signature = request.getHeaders().get(STRIPE_SIGNATURE_HEADER);
             Event event = Webhook.constructEvent(payload, signature, stripeWebhookSecret);
+            logger.debug("stripe event: type = {}", event.getType());
+            StripeObject stripeObject = event.getDataObjectDeserializer().getObject()
+                    .orElseThrow(() -> new PaymentException("Invalid Stripe event"));
+            logger.debug("stripe object: {}", stripeObject);
 
             return switch (event.getType()) {
                 case "payment_intent.succeeded"
-                    -> Optional.of(new PaymentResult(extractOrderId(event), PaymentStatus.PAID));
+                    -> Optional.of(new PaymentResult(extractOrderId(stripeObject), PaymentStatus.PAID));
                 case "payment_intent.canceled"
-                    -> Optional.of(new PaymentResult(extractOrderId(event), PaymentStatus.CANCELED));
+                    -> Optional.of(new PaymentResult(extractOrderId(stripeObject), PaymentStatus.CANCELED));
                 case "payment_intent.payment_failed"
-                    -> Optional.of(new PaymentResult(extractOrderId(event), PaymentStatus.FAILED));
+                    -> Optional.of(new PaymentResult(extractOrderId(stripeObject), PaymentStatus.FAILED));
                 default
                     -> Optional.empty();
             };
@@ -69,9 +73,7 @@ public class StripePaymentGateway implements PaymentGateway {
         }
     }
 
-    private static Long extractOrderId(Event event) {
-        StripeObject stripeObject = event.getDataObjectDeserializer().getObject()
-            .orElseThrow(() -> new PaymentException("Invalid Stripe event"));
+    private static Long extractOrderId(StripeObject stripeObject) {
         PaymentIntent paymentIntent = (PaymentIntent)stripeObject;
         logger.debug("PaymentIntent ID: {}", paymentIntent.getId());
         return Long.valueOf(paymentIntent.getMetadata().get("order_id"));
@@ -80,9 +82,10 @@ public class StripePaymentGateway implements PaymentGateway {
     private Session getPaymentSession(Order order) throws StripeException {
         SessionCreateParams.Builder builder = SessionCreateParams.builder()
                 .setMode(SessionCreateParams.Mode.PAYMENT)
-                .setSuccessUrl(websiteUrl + "/checkout-success?orderId=" + order.getId())
-                .setCancelUrl(websiteUrl + "/checkout-cancel")
-                .putMetadata("order_id", String.valueOf(order.getId()));
+                .setSuccessUrl(websiteUrl + "/checkout/success?orderId=" + order.getId())
+                .setCancelUrl(websiteUrl + "/checkout/cancel?orderId=" + order.getId())
+                .putExtraParam("payment_intent_data[metadata][order_id]", order.getId())
+                .putMetadata("order_id_x", String.valueOf(order.getId()));
 
         order.getItems()
                 .stream()

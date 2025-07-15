@@ -26,6 +26,8 @@
 
     <!-- Set specific logging level for CartController -->
     <logger name="com.kantares.store.cart.CartController" level="DEBUG"/>
+    <logger name="com.kantares.store.auth" level="DEBUG"/>
+    <logger name="com.kantares.store.payments" level="DEBUG"/>
 
     <!-- Root logger -->
     <root level="INFO">
